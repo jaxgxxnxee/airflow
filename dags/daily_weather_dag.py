@@ -9,7 +9,7 @@ from datetime import timedelta
 
 import requests
 import logging
-# import psycopg2
+import psycopg2
 
 
 def get_Redshift_connection():
@@ -55,8 +55,7 @@ def load(**context):
     cur = get_Redshift_connection()
     daily_weather_info = context["task_instance"].xcom_pull(
         key="return_value", task_ids="transform")
-    daily_weather_info = iter(daily_weather_info)
-    next(daily_weather_info)
+
     sql = "BEGIN; DELETE FROM {schema}.{table};".format(
         schema=schema, table=table)
     for drow in daily_weather_info:
