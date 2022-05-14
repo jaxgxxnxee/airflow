@@ -9,7 +9,7 @@ from datetime import timedelta
 
 import requests
 import logging
-import psycopg2
+# import psycopg2
 
 
 def get_Redshift_connection():
@@ -106,7 +106,7 @@ load = PythonOperator(
     python_callable=load,
     params={
         'schema': 'jaxgxxnxee',  # 스키마 파라미터로 받기
-        'table': 'name_gender'
+        'table': 'weather_forecast'
     },
     provide_context=True,
     dag=dag_second_assignment)
