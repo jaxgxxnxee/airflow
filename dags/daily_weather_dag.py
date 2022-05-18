@@ -76,7 +76,7 @@ def load(**context):
         schema=schema, table=table)
     sql += f"""INSERT INTO {schema}.{table}
                SELECT date, temp, min_temp, max_temp, created_date 
-                FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY date ORDER BY created_date DESC) seq FROM {schema}.temp_{table}) WHERE seq = 1"""
+                FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY date ORDER BY created_date DESC) seq FROM {schema}.temp_{table}) WHERE seq = 1;"""
     for drow in daily_weather_info:
         if drow != "":
             sql += f"""INSERT INTO {schema}.{table} (date, temp, min_temp, max_temp) VALUES ('{drow['date']}', '{drow['temp']}', '{drow['min_temp']}', '{drow['max_temp']}');"""
