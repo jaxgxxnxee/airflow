@@ -80,6 +80,7 @@ def load(**context):
     for drow in daily_weather_info:
         if drow != "":
             sql += f"""INSERT INTO {schema}.{table} (date, temp, min_temp, max_temp) VALUES ('{drow['date']}', '{drow['temp']}', '{drow['min_temp']}', '{drow['max_temp']}');"""
+    sql += f"""DROP TABLE IF EXISTS {schema}.temp_{table};"""
     sql += """END;"""
     logging.info(sql)
     cur.execute(sql)
