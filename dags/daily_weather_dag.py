@@ -80,7 +80,7 @@ def load(**context):
     sql += f"""CREATE TABLE {schema}.temp_{table} AS SELECT date, temp, min_temp, max_temp, created_date 
                 FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY date ORDER BY created_date DESC) seq FROM {schema}.{table}) WHERE seq = 1;"""
     sql += f"DELETE FROM {schema}.{table};"
-    sql += f"""INSERT INTO {schema}.{table} AS SELECT * FROM {schema}.temp_{table};"""
+    sql += f"""INSERT INTO {schema}.{table} SELECT * FROM {schema}.temp_{table};"""
     sql += f"""DROP TABLE IF EXISTS {schema}.temp_{table};"""
     sql += """END;"""
     logging.info(sql)
