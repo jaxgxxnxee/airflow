@@ -66,6 +66,7 @@ def load(**context):
     sql += f"""INSERT INTO {schema}.{table}
                SELECT date, temp, min_temp, max_temp, created_date 
                 FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY date ORDER BY created_date DESC) seq FROM {schema}.temp_{table}) WHERE seq = 1"""
+    sql += """END;"""
     logging.info(sql)
     cur.execute(sql)
 
