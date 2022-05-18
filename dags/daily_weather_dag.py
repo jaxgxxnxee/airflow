@@ -56,14 +56,19 @@ def load(**context):
     daily_weather_info = context["task_instance"].xcom_pull(
         key="return_value", task_ids="transform")
     # 20220518: feedback
-    sql = f"CREATE TABLE {schema}.temp_{table} AS SELECT * FROM {schema}.{table};"
+    sql = f"""CREATE TABLE {schema}.temp_{table} (date date primary key,
+                                                  temp float,
+                                                  min_temp float,
+                                                  max_temp float,
+                                                  created_date timestamp DEFAULT GETDATE())
+             AS SELECT * FROM {schema}.{table};"""
     for drow in daily_weather_info:
         if drow != "":
             sql += f"""INSERT INTO {schema}.temp_{table} (date, temp, min_temp, max_temp) VALUES ('{drow['date']}', '{drow['temp']}', '{drow['min_temp']}', '{drow['max_temp']}');"""
 
     sql += "BEGIN; DELETE FROM {schema}.{table};".format(
         schema=schema, table=table)
-    sql += f"""INSERT INTO {schema}.{table}
+    sql += f"""INSERT INTO {schema}.{table} 
                SELECT date, temp, min_temp, max_temp, created_date 
                 FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY date ORDER BY created_date DESC) seq FROM {schema}.temp_{table}) WHERE seq = 1; """
     sql += """END;"""
