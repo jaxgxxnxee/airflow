@@ -57,22 +57,46 @@ def load(**context):
         key="return_value", task_ids="transform")
     # 20220518, 20220521: feedback
     # redshift에서: CREATE TABLE AS(CTAS) 테이블은 자신이 생성된 테이블로부터 제약 조건, 자격 증명 열, 기본 열 값 또는 기본 키를 상속하지 않습니다.
-    sql = f"""CREATE TABLE {schema}.temp_{table}
+    create_sql = f"""DROP TABLE IF EXISTS {schema}.temp_{table}"""
+    create_sql = f"""CREATE TABLE {schema}.temp_{table}
              (Like SELECT * FROM {schema}.{table} INCLUDING DEFAULTS);"""
-    sql = f"""INSERT INTO {schema}.temp_{table} SELECT * FROM {schema}.{table};"""
+    create_sql = f"""INSERT INTO {schema}.temp_{table} SELECT * FROM {schema}.{table};"""
+    logging.info(create_sql)
+    try:
+        cur.execute(create_sql)
+        cur.execute("COMMIT;")
+    except Exception as e:
+        cur.execute("ROLLBACK;")
+        raise
+
+    insert_sql = ""
     for drow in daily_weather_info:
         if drow != "":
-            sql += f"""INSERT INTO {schema}.temp_{table} (date, temp, min_temp, max_temp) VALUES ('{drow['date']}', '{drow['temp']}', '{drow['min_temp']}', '{drow['max_temp']}');"""
+            insert_sql += f"""INSERT INTO {schema}.temp_{table} (date, temp, min_temp, max_temp) VALUES ('{drow['date']}', '{drow['temp']}', '{drow['min_temp']}', '{drow['max_temp']}');"""
+    logging.info(insert_sql)
+    try:
+        cur.execute(insert_sql)
+        cur.execute("COMMIT;")
+    except Exception as e:
+        cur.execute("ROLLBACK;")
+        raise
 
-    sql += "BEGIN; DELETE FROM {schema}.{table};".format(
+    # auto commit false임! Begin이 적용되지 않음
+    alter_sql = "BEGIN;"
+    alter_sql += "DELETE FROM {schema}.{table};".format(
         schema=schema, table=table)
-    sql += f"""INSERT INTO {schema}.{table} 
+    alter_sql += f"""INSERT INTO {schema}.{table} 
                SELECT date, temp, min_temp, max_temp, created_date 
                 FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY date ORDER BY created_date DESC) seq FROM {schema}.temp_{table}) WHERE seq = 1; """
-    sql += """END;"""
+    alter_sql += """END;"""
 
-    logging.info(sql)
-    cur.execute(sql)
+    logging.info(alter_sql)
+    try:
+        cur.execute(alter_sql)
+        cur.execute("COMMIT;")
+    except Exception as e:
+        cur.execute("ROLLBACK;")
+        raise
 
 
 dag_second_assignment = DAG(
