@@ -65,11 +65,12 @@ execsql = PythonOperator(
         'schema': 'jaxgxxnxee',
         'table': 'nps_summary',
         'sql': """SELECT 
-                    NULLIF(COUNT(Distinct id),0) as total,
-                    COUNT(Distinct Case When score >= 9 THEN id ELSE Null END) as promoter,
-                    COUNT(Distinct Case When score <= 6 THEN id ELSE Null END) as detractor,
-                    ((promoter - detractor)::float/total) as nps  -- 단 nps의 경우 분모가 더 크기 때문에 float나 decimal로 캐스팅을 해주어야 0보다 큰 값이 나옵니다
-                    from jaxgxxnxee.nps"""
+                    ROUND(SUM(CASE
+                        WHEN score >= 9 THEN 1 
+                        WHEN score <= 6 THEN -1 END)::float*100/COUNT(1), 2)
+                    FROM keeyong.nps
+                    GROUP BY 1
+                    ORDER BY 1;"""
     },
     provide_context=True,
     dag=dag
