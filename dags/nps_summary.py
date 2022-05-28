@@ -68,7 +68,7 @@ execsql = PythonOperator(
                     NULLIF(COUNT(Distinct id),0) as total,
                     COUNT(Distinct Case When score >= 9 THEN id ELSE Null END) as promoter,
                     COUNT(Distinct Case When score <= 6 THEN id ELSE Null END) as detractor,
-                    ((promoter - detractor)/total) as nps
+                    ((promoter - detractor)::float/total) as nps  -- 단 nps의 경우 분모가 더 크기 때문에 float나 decimal로 캐스팅을 해주어야 0보다 큰 값이 나옵니다
                     from jaxgxxnxee.nps"""
     },
     provide_context=True,
