@@ -64,11 +64,11 @@ execsql = PythonOperator(
     params={
         'schema': 'jaxgxxnxee',
         'table': 'nps_summary',
-        'sql': """SELECT 
+        'sql': """SELECT LEFT(created_at, 10) AS date,
                     ROUND(SUM(CASE
                         WHEN score >= 9 THEN 1 
                         WHEN score <= 6 THEN -1 END)::float*100/COUNT(1), 2)
-                    FROM keeyong.nps
+                    FROM jaxgxxnxee.nps
                     GROUP BY 1
                     ORDER BY 1;"""
     },
